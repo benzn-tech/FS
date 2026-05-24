@@ -1,0 +1,1744 @@
+
+1?Description	4
+2?Login relevant	5
+2.1?Obtain random number	5
+2.2?Company login	6
+2.3?Company logout	7
+2.4?Agent login	8
+2.5?Select language	9
+3?User relevant	10
+3.1?Query user	11
+3.2?Add user	 14
+3.3?Modify user	16
+3.4?Delete user	17
+3.5?Activate user	18
+3.6?Pause user	19
+3.7?Query contact	20
+3.8?Add contact	21
+3.9?Delete contact	22
+3.10?Expiration reminding	23
+3.11?Query user battery 	24
+4?Group relevant 	26
+4.1?Query group	26
+4.2?Add group	28
+4.3?Modify group	29
+4.4?Delete group	30
+4.5?Add group member	 31
+4.6?Modify group member	32
+    4.7?Delete group member	33
+4.8?Query relevance group	33
+4.9?Add relevance group	33
+4.10?Delete relevance group	33
+     
+5?Bill relevant	34
+5.1?Query bill	37
+5.2?Active bill	39
+5.3?Year account record	40
+6?Others	43
+6.1?Set GPS	43
+6.2?Query positioning	43
+6.3?Query recording	46
+6.4?Recording statistics	48
+6.5?Group member recording statistics	49
+    6.6?Query video	51
+6.7?Query upload file	53
+6.8?Statistical information	55
+6.9?Query SOS Message	57
+6.10?Query Text Message	58
+    6.11?Query Login Record	60
+6.12?Login statistics 	62
+6.13?Login user statistics	63
+6.14?No logged-in user statistics	65
+    6.15?Query drawing map	67
+6.16?Add drawing map 	69
+6.17?Modify drawing map	70
+6.18?Delete drawing map	71
+6.19?Query indoor map 	72
+6.20?Update indoor map	74
+6.21?Upload indoor map	75
+    6.22?Send message	76
+6.23?Recording statistics(temporary group)	77
+
+7?Agent related interface	76
+7.1?Agent transaction record query	76
+8?Company Administrator Interface	81
+8.1?Query Administrator	81
+8.2?Add Company Administrator Account	82
+8.3?Modify Privilege Of Company Account	84
+8.4?Recover the administrator password	85
+8.5?Delete administrator	86
+9?Company Department   87
+9.1?Query department	87
+9.2?Add department	88
+9.3?Modify department	89
+9.4?Delete department	91
+9.5?Add department user	92
+9.6?Remove (Not delete) department user	 93
+Appendix	94
+1?Return code	94
+2?Information of the user rights	94
+3?Bill function	95
+4?Trade type 	95
+5?User Type	96
+6?Company Administrator Account Rights	 96
+7?Additional Rights For Company Administrator Account 	98
+8?Company Administrator Account Patrol 2.0 Platform Rights	98
+9?Department account permissions	99
+ 
+
+
+1?Description
+The REAL PTT management platform API uses the session to save the login status. When calling the api, you need to carry the cookie, so if you use the ajax method, please add the following parameters:
+// ajax
+xhrFields: { withCredentials: true },
+crossDomain: true
+// axios
+axios.defaults.withCredentials = trueMost browsers work fine when inter-domain requests, but in Safari, because the browser does not allow cookies to be cross-domain access by default, you need to turn off cross-site tracking in the settings.
+If you need to call the interface through a secure ssl link, you can change all https://api.realptt.com to https://realptt.com.
+
+
+2?Login relevant
+2.1?Obtain random number
+Brief description: 
+* Obtain the login random number interface and make the key encrypted by HMAC_SHA1
+* The sessionId in the return parameter is the current session ID. If you are accessing from a non browser, such as Java, or the browser has disabled cookie, you need to add "; jsessionid=xxx" (before the "?" symbol) to the address of other interfaces, such as logging in:              https://api.realptt.com/ptt/organization;jsessionid=2A93430B488F143A0455E7944FEAC6B2?method=login&account=test&pwd=117ec9786dd6f5d0e0247bdbf33097c8b9524546&timeZoneOffset=-480
+* 
+Request URL: 
+* GET https://api.realptt.com/ptt/random
+Parameter: 
+* N/A
+Return example
+  {
+  "code":0,
+  "data":{
+    "random":"c6ba19fff3259bbc251370d207bdcb31b8f7658598326ba0fa7948557c35dc4f",
+    "sessionId":"2A93430B488F143A0455E7944FEAC6B2"},
+  "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructionrandomstringrandom numbersessionIdstringID of the current session 
+ 
+2.2?Company login
+Brief description: 
+* Company login interface, get the login random number before calling
+Request URL: 
+* GET https://api.realptt.com/ptt/organization?method=login
+Request example:
+* https://api.realptt.com/ptt/organization?method=login&account=test&pwd=1a2d47dcb52cf8edc845de274c5b19858f18eeec&timeZoneOffset=-480
+Parameter: 
+Parameter nameRequiredTypeInstructionaccountYstringaccountpwdYstringpassword(hex_hmac_sha1(random, hex_sha1(value)))timeZoneOffsetYinttime difference between Greenwich time and local time?unit?minuteReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  } 
+2.3?Company logout
+Brief description: 
+* Company logout interface
+Request URL: 
+* GET https://api.realptt.com/ptt/organization?method=logout
+Request example:
+* https://api.realptt.com/ptt/organization?method= logout
+Parameter: 
+Parameter nameRequiredTypeInstructionno parameterReturn example
+  {
+    "code": 2,
+    "data": {
+    },
+    "msg": "logout success"
+  } 
+
+
+2.4?Agent login
+Brief description: 
+* Agent login interface, get the login random number before calling
+Request URL: 
+* GET https://api.realptt.com/ptt/proxyApi?method=login
+Request example:
+* https://api.realptt.com/ptt/proxyApi?method=login&account=sandy&pwd=1a2d47dcb52cf8edc845de274c5b19858f18eeec&timeZoneOffset=-480
+Parameter: 
+Parameter nameRequiredTypeInstructionaccountYstringaccountpwdYstringpassword(hex_hmac_sha1(random, hex_sha1(value)))timeZoneOffsetYinttime difference between Greenwich time and local time?unit?minuteReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }
+
+2.5?Select language
+Brief description? 
+* Select the language interface
+Request URL? 
+* GET https://api.realptt.com/ptt/organization?method=setLanguage
+Request example?
+* https://api.realptt.com/ptt/organization?method=setLanguage&language=es-ES
+Parameter? 
+Parameter nameRequiredTypeInstructionlanguageYstringlanguage?
+zh?simplified Chinese?
+zh-TW?traditional Chinese?
+en?English?
+es-ES?Spanish?
+uk-UA?Ukrainian?
+it-IT?Italian?
+ja-JP?Japanese?Return example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }3?User relevant
+3.1?Query user
+Brief description: 
+* Company query user interface
+Request URL: 
+* GET https://api.realptt.com/ptt/user?method=get
+Request example:
+* https://api.realptt.com/ptt/user?method=get&limit=15&page=0&order_by=id&order_type=asc&user_status=1&user_online=0&group_id=920
+Parameter: 
+Parameter nameRequiredTypeInstructionlimitNintper page quantity, default 15, max 100pageNintpage number, default 0order_byNstringsort order(id|account|name|group_id|status|bill_end_time), default idorder_typeNstringsort direction(asc|desc), default ascuser_statusNintuser using status(0 pause|1 normal)user_onlineNintuser online status(0 offline|1 online)Other query conditionsonly fill out one from following parameteruser_nameNstringuser nameuser_accountNstringuser accountgroup_idNintgroup id of the useruser_telNstringuser phone numberdefault_group_idNintdefault group id of userbill_idNintuser bill numberuser_idNlongUser IDpart_accountNstringDepartment accountReturn example
+ {
+    "code":0,
+    "data":{
+        "total":2,
+        "users":[
+            {
+                "battery":55,
+                "bill_end_time":"2023-09-30",
+                "bill_id":394548,
+                "client_type":1,
+                "default_group":4294967295,
+                "default_group_name":"",
+                "desc":"",
+                "group_ids":"284056,284057,284058,284059,284061",
+                "group_names":"test,test001,test002",
+                "group_priority":1,
+                "iccid":"",
+                "imei":"",
+         "imei2":"",
+         "pause_time":"2020-04-25",
+                "priority":0,
+                "privilege":6,
+                "receive_number":0,
+                "tel_number":"",
+                "user_account":"fyyc11",
+                "user_id":1132199937,
+                "user_name":"sdf",
+                "user_online":0,
+          "user_status":1,
+                "last_online_time":"2022-11-28 13:45:51",
+                "dispatch_des":"dispatch des test",
+               "card_end_time":"2022-11-30",
+               "client_name":"test 123",
+               "actual_IMEI":"451214512412135",
+               "actual_ICCID":"45124789512101245120"
+            }
+         ”msg”:”success”
+  }Return parameter instruction
+Parameter nameTypeInstructionbill_end_timestringbill expiration timebill_idintbill numberclient_typeintUser type?See Appendix for user typesdefault_groupintdefault group iddefault_group_namestringdefault group namedescstringuser descriptiongroup_idsstringgroup id of the usergroup_namesstringThe name of the user's groupgroup_priorityintThe user default group priority is 1-10, the higher the number, the higher the levelimeistringIMEIimei2stringIMEI2iccidstringicciduser_idintuser idprivilegeintUser permissions, please see the permissions description page for detailspriorityintUsers default to group priority 0-10, the higher the number, the higher the level user_namestringuser nameuser_onlineintuser online status(0 offline|1 online)user_statusintuser using status(0 pause|1 normal)batteryintUser device batterydispatch_desstringDispatch console information displaycard_end_timestringSIM Card expiration timelast_online_timestringLast online timeactual_IMEIstringCurrent Device IMEIactual_ICCIDstringCurrent ICCIDclient_namestringClients Name 
+3.2?Add user
+Brief description: 
+* Company add user interface
+Request URL: 
+* GET https://api.realptt.com/ptt/user?method=add
+Request example:
+* https://api.realptt.com/ptt/user?method=add&user_account=corget&pwd=111111&user_name=bruce&bill_id=674309&group_ids=920&default_group=920&tel=13623798888&privilege=6&priority=0
+Parameter: 
+Parameter nameRequiredTypeInstructionuser_accountYstringaccountpwdYstringpassword, hex_sha1(pwd)user_nameYstringuser nameproxy_accountYstringproxy accountproxy_pwdYstringproxy password (hex_hmac_sha1(random,hex_sha1(value)))bill_idYintbill id 
+(create an inactive order in proxy)bill_typeYint1group_idsNstringgroup id, multiple groups separated by commadefault_groupNintdefault group, choose from group_idstelNstringphone numberprivilegeNintuser rights, please view details in the appendix-rights informationpriorityNintUser default group priority (1-10)
+(1 low grade …10 super grade)imeiNstringIMEIimei2NstringIMEI2iccidNstringIcciddescNstringuser descriptionReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }3.3?Modify user
+Brief description: 
+* Company modify user interface
+Request URL: 
+* GET https://api.realptt.com/ptt/user?method=update
+Request example:
+* https://api.realptt.com/ptt/user?method=update&user_account=corget&user_name=corget
+Parameter: 
+Parameter nameRequiredTypeInstructionuser_accountYstringaccountpwdNstringpassword, hex_sha1(pwd)user_nameNstringuser namebill_idNintbill idgroup_idsNstringgroup id, multiple groups separated by commadefault_groupNintdefault group, choose from group_idstelNstringphone numberprivilegeNintuser rights, please view details in the appendix-rights informationpriorityNintUser default group priority (1-10)
+(1 low grade …10 super grade)client_typeNintUser type?See Appendix for user typesimeiNstringIMEIimei2NstringIMEI2iccidNstringIcciddescNstringuser descriptionReturn example
+  {
+    "code":0,
+    "data":{
+      "user":{
+        "bill_end_time":"2023-09-30",
+        "bill_id":394548,
+         "client_type":1,
+        "default_group":4294967295,
+        "default_group_name":"",
+        "desc":"",
+        "group_ids":"284056,284057,284058,284059,284061",
+        "iccid":"",
+         "imei":"",
+         "imei2":"",
+        "priority":1,
+        "privilege":6,
+        "tel_number":"13623788231",
+        "user_account":"fyyc11",
+        "user_id":1132199937,
+        "user_name":"sdf",
+        "user_online":0,
+        "user_status":1
+      }
+    },
+    "msg":"success"
+  }3.4?Delete user
+Brief description: 
+* Company delete user interface
+Request URL: 
+* GET https://api.realptt.com/ptt/user?method=delete
+Request example:
+* https://api.realptt.com/ptt/user?method=delete&user_ids=328826
+Parameter: 
+Parameter nameRequiredTypeInstructionuser_idsYstringusers id, multiple groups separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }3.5?Activate user
+Brief description: 
+* Company activate user interface
+Request URL: 
+* GET https://api.realptt.com/ptt/user?method=active
+Request example:
+* https://api.realptt.com/ptt/user?method=active&user_ids=328826,328142
+Parameter: 
+Parameter nameRequiredTypeInstructionuser_idsYstringusers id, multiple groups separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }3.6?Pause user 
+Brief description: 
+* Company pause user interface
+ 
+Request URL: 
+* GET https://api.realptt.com/ptt/user?method=pause
+Request example:
+* https://api.realptt.com/ptt/user?method=pause&user_ids=328826,328142
+Parameter: 
+Parameter nameRequiredTypeInstructionuser_idsYstringusers id, multiple groups separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }3.7?Query contact
+Brief description: 
+* Company query user contact interface
+Request URL: 
+* GET https://api.realptt.com/ptt/contact?method=get
+Request example:
+* https://api.realptt.com/ptt/contact?method=get&limit=15&page=0&order_by=id&order_type=asc&user_id=328142
+Parameter: 
+Parameter nameRequiredTypeInstructionuser_idYintuser idlimitNintper page number, default 15pageNintpage, default 0order_byNstringsort order(id|account|name), default idorder_typeNstringsort direction(asc|desc), default ascReturn example
+  {
+    "code":0,
+    "data":{
+      "buddies":[
+        {
+          "user_account":"fyyy",
+          "user_id":1132199938,
+          "user_name":"ggg"
+        }
+      ],
+      "total":1
+    },
+    "msg":"success"
+  }Return parameter instruction 
+Parameter nameTypeInstructionuser_accountstringcontact accountuser_idintcontact iduser_namestringcontact name 
+3.8?Add contact
+Brief description: 
+* Company add contact interface
+Request URL: 
+* GET https://api.realptt.com/ptt/contact?method=add
+Request example:
+* https://api.realptt.com/ptt/contact?method=add&user_id=328826&contact_ids=328142
+Parameter: 
+Parameter nameRequiredTypeInstructionuser_idYintuser idcontact_idsYstringcontact id, multiple contacts separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }3.9?Delete contact
+Brief description: 
+* Company delete user contact interface
+Request URL: 
+* GET https://api.realptt.com/ptt/contact?method=delete
+Request example:
+* https://api.realptt.com/ptt/contact?method=delete&user_id=328826&contact_ids=328142
+Parameter: 
+Parameter nameRequiredTypeInstructionuser_idYintuser idcontact_idsYstringcontact id, multiple contacts separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }3.10?Expiration reminding
+Brief description: 
+* Company set up expiration reminding interface
+Request URL: 
+* GET https://api.realptt.com/ptt/user?method=remind
+ 
+ 
+Request example:
+* https://api.realptt.com/ptt/user?method=remind&status=1&content=qwrqwrqwrqwr
+Parameter: 
+Parameter nameRequiredTypeInstructionstatusNintstatus(0 close|1 open), default 1contentNstringcontent, default ""Return example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }3.11?Query user battery
+Brief description: 
+* Company set up expiration reminding interface
+Request URL: 
+* GET https://api.realptt.com/ptt/user?method=getUserPower
+Request example:
+* https://api.realptt.com/ptt/user?method=getUserPower&status=1&account=testq99
+ 
+ 
+Parameter: 
+Parameter nameRequiredTypeInstructionaccountYStringUser account(required)Return example
+  {
+    "code":0,
+    "data":{
+        "power":0,
+        "account":"testq99"
+    },
+    "msg":"success"
+} 
+
+
+4?Group relevant
+4.1?Query group
+Brief description: 
+* Company query group interface
+Request URL: 
+* GET https://api.realptt.com/ptt/group?method=get
+Request example:
+* https://api.realptt.com/ptt/group?method=get&limit=15&page=0&order_by=id&order_type=desc&group_id=920
+Parameter: 
+Parameter nameRequiredTypeInstructionlimitNintper page number, default 15, max 100pageNintpage number, default 0order_byNstringsort column(id|name), default idorder_typeNstringsort direction(asc|desc), default ascOther query conditionsonly fill out one from following parametersgroup_idNintgroup idgroup_nameNstringgroup name 
+Return example
+  {
+    "code":0,
+    "data":{
+        "total":2,
+        "groups":[
+            {
+                "contact_name":"",
+                "contact_phone":"",
+                "group_id":477352,
+                "group_name":"bruce",
+                "group_priority":1,
+                "isShareGroup":0,
+                "master_account":"",
+                "show_user":1
+            },
+            {
+                "contact_name":"",
+                "contact_phone":"",
+                "group_id":477353,
+                "group_name":"dsada",
+                "group_priority":1,
+                "isShareGroup":0,
+                "master_account":"",
+                "show_user":1
+            }
+        ]
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructioncontact_namestringcontact namecontact_phonestringcontact phone numbergroup_idintgroup idgroup_namestringgroup nameshow_userintshow group members(0 hide|1 show)group_priorityintGroup priority (1-10, the higher the number, the higher the rank)isShareGroupintWhether for sharing group (0 is not | 1)master_accountstringGroup Scheduling Account4.2?Add group
+Brief description: 
+* Company add group interface
+Request URL: 
+* GET https://api.realptt.com/ptt/group?method=add
+Request example:
+* https://api.realptt.com/ptt/group?method=add&group_name=corget&contact_name=bruce&contact_phone=13264767671&show_user=1&priority=1
+Parameter: 
+Parameter nameRequiredTypeInstructiongroup_nameYstringgroup namecontact_nameYstringcontact name, if not, pass in an empty stringcontact_phoneNstringcontact phone numbershow_userNintshow group members(0 hide|1 show)?default 1priorityNintUser default group priority (1-10)
+(1 low grade …10 super grade)Return example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }4.3?Modify group
+Brief description: 
+* Company modify group interface
+Request URL: 
+* GET https://api.realptt.com/ptt/group?method=update
+Request example:
+* https://api.realptt.com/ptt/group?method=update&group_id=417400&group_name=corget123
+Parameter: 
+Parameter nameRequiredTypeInstructiongroup_idYintgroup idgroup_nameNstringgroup namecontact_nameNstringcontact name, if not, pass in an empty stringcontact_phoneNstringcontact phone numbershow_userNintshow group members(0 hide|1 show), default 1master_accountNstringGroup Scheduling AccountpriorityNintUser default group priority (1-10)
+(1 low grade …10 super grade)Return example
+{
+    "code":0,
+    "data":{
+        "group":{
+            "contact_name":"bruce",
+            "contact_phone":"232132131",
+            "group_id":477359,
+            "group_name":"bruce1",
+            "group_priority":1,
+            "isShareGroup":0,
+            "master_account":"test001",
+            "show_user":1
+        }
+    },
+    "msg":"success"
+}4.4?Delete group
+Brief description: 
+* Company delete group interface
+Request URL: 
+* GET https://api.realptt.com/ptt/group?method=delete
+Request example:
+* https://api.realptt.com/ptt/group?method=delete&group_ids=417400,417401
+Parameter: 
+Parameter nameRequiredTypeInstructiongroup_idsYstringgroup id, multiple groups separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }4.5?Add group member
+Brief description: 
+* Company add group member interface
+Request URL: 
+* GET https://api.realptt.com/ptt/groupuser?method=add
+Request example:
+* https://api.realptt.com/ptt/groupuser?method=add&group_id=471402&user_ids=328142
+Parameter: 
+Parameter nameRequiredTypeInstructiongroup_idYstringgroup iduser_idsYstringuser id, multiple users separated by commadefault_groupNintWhether the default group 
+(1 YES | 0 NO) 
+Return example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }4.6?Modify group member
+Brief description: 
+* Company modify group member interface
+Request URL: 
+* GET https://api.realptt.com/ptt/groupuser?method= updateGroupUser
+Request example:
+* https://api.realptt.com/ptt/groupuser?method= updateGroupUser&group_id=471402&user_id=328142&priority=1&state=0
+Parameter: 
+Parameter nameRequiredTypeInstructiongroup_idYstringgroup iduser_idYstringuser idpriorityNintUser default group priority (1-10)
+(1 low grade …10 super grade)stateNintInvisible in user groups 
+(0 invisibility | 1 normal)Return example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }4.7?Delete group member
+Brief description: 
+* Company delete group member interface
+Request URL: 
+* GET https://api.realptt.com/ptt/groupuser?method=delete
+Request example:
+* https://api.realptt.com/ptt/groupuser?method=delete&group_id=471402&user_ids=328142
+Parameter: 
+Parameter nameRequiredTypeInstructiongroup_idYstringgroup iduser_idsYstringuser id, multiple users separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }4.8?Query relevance group
+Brief description: 
+* Company  query relevance group interface
+Request URL: 
+* GET  https://api.realptt.com/ptt/group?method=getGroupGroup
+Request example:
+* https://api.realptt.com/ptt/group?method=getGroupGroup&groupId=90005
+Parameter: 
+Parameter nameRequiredTypeInstructiongroupIdYstringgroup idReturn example
+  {
+    "code":0,
+    "data":{
+        "total":1,
+        "groupGroups":[
+            {
+                "group_one_flag":1,
+                "group_one_id":90005,
+                "group_one_name":"test3",
+                "group_one_priority":3,
+                "group_two_flag":1,
+                "group_two_id":90004,
+                "group_two_name":"test2",
+                "group_two_priority":2
+            }
+        ]
+    },
+    "msg":"success"
+}?????? 
+???????group_one_idintmain group idgroup_one_namestringmain group namegroup_one_priorityintmain group prioritygroup_one_flagintWhether the main group listengroup_two_idintrelevance group idgroup_two_namestringrelevance group namegroup_two_priorityintrelevance group prioritygroup_two_flagintWhether the relevance group listen 
+4.9?Add relevance group
+Brief description: 
+* Company add relevance group interface
+Request URL: 
+* GET https://api.realptt.com/ptt/group?method=addGroupGroup
+Request example:
+* https://api.realptt.com/ptt/group?method=addGroupGroup&groupId=90005&groupIds=90004,90003
+Parameter: 
+Parameter nameRequiredTypeInstructiongroupIdYstringgroup idgroupIdsYstringTarget group id, multiple users separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }4.10?Delete relevance group
+Brief description: 
+* Company delete relevance group interface
+Request URL: 
+* GET  https://api.realptt.com/ptt/group?method=deleteGroupGroup
+Request example:
+* https://api.realptt.com/ptt/group?method=deleteGroupGroup&groupId=90005&groupIds=90004,90003
+Parameter: 
+Parameter nameRequiredTypeInstructiongroupIdYstringgroup idgroupIdsYstringTarget group id, multiple users separated by commaReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  } 
+5?Bill relevant
+5.1?Query bill
+Brief description: 
+* Company query bill interface
+Request URL: 
+* GET https://api.realptt.com/ptt/bill?method=get
+Request example:
+* https://api.realptt.com/ptt/bill?method=get&status=0
+Parameter: 
+Parameter nameRequiredTypeInstructionlimitNintper page quantity, default 15, max 100pageNintpage, default 0statusNintActivation state?(0 inactivated|1 activation)Return example
+{
+    "code": 0,
+    "data": {
+        "bills": [{
+                "bill_id": 674315,
+                "create_time": "2018-08-06 18:57:25",
+                "des": "",
+                "end_time": "2019-08-15",
+                "month": 0,
+                "old_bill": 0,
+                "privilege": 1,
+                "remain_number": 1,
+                "start_time": "2018-08-07",
+                "status": 1,
+                "total_number": 1
+            },
+            {
+                "bill_id": 674314,
+                "create_time": "2018-08-06 18:34:28",
+                "des": "",
+                "end_time": "2019-08-15",
+                "month": 0,
+                "old_bill": 0,
+                "privilege": 63,
+                "remain_number": 1,
+                "start_time": "2018-08-06",
+                "status": 1,
+                "total_number": 1
+            },
+            ...
+        ],
+        "total": 196
+    },
+    "msg": "success"
+}Return parameter instruction 
+Parameter nameTypeInstructionbill_idintbill idcreate_timestringbill creation timedesstringcommentend_timestringbill ending timemonthintordering monthsold_billintWhether it is an old bill, 0 is not 1 is, when the old order is privilege=1 or privilege=5, then the order has a call | positioning | recording | broadcast functionprivilegeintbill function, please see Appendix - Order Functionremain_numberintnumber of remaining accountsstart_timestringbill start timestatusintactive state, 0 is not activated 1 activetotal_numberinttotal number of bill5.2?Active bill
+Brief description: 
+* Active bill interface
+Request URL: 
+* GET https://api.realptt.com/ptt/bill?method=active
+Request example:
+* https://api.realptt.com/ptt/bill?method=active&bill_id=674315&number=1&last_time=1533603879000
+Parameter: 
+Parameter nameRequiredTypeInstructionbill_idYintactivated order idnumberYintnumber of activated accountslast_timeNlongcurrent time, the number of milliseconds from January 1, 1970, 00:00:00 to the present 
+Return example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }5.3?Year account record
+Brief description: 
+* Year account transaction record interface
+Request URL: 
+* GET https://api.realptt.com/ptt/trade?method=get
+Request example:
+* https://api.realptt.com/ptt/trade?method=get&limit=15&page=2&start_time=2017-03-01 10:00:00&end_time=2018-08-01 10:00:00
+Parameter: 
+Parameter nameRequiredTypeInstructionlimitNintper page number, default 15, max 100pageNintpage, default 0start_timeNstringstart timeend_timeNstringend timeReturn example
+{
+    "code": 0,
+    "data": {
+        "total": 51,
+        "trades": [{
+            "remain_account": 1,
+            "time": "2017-03-01 11:40:53",
+            "trade_account": 1,
+            "trade_type": 16
+        }, {
+            "remain_account": 2,
+            "time": "2017-03-01 11:40:38",
+            "trade_account": -1,
+            "trade_type": 15
+        }, 
+        ...
+        ]
+    },
+    "msg": "success"
+}Return parameter instruction 
+Parameter nameTypeInstructiontimestringtrade timetrade_typeinttransaction type, see Appendix - Transaction Typetrade_accountinttrade number of accountremain_accountintremain number of account 
+
+
+6?Others
+6.1?Set GPS
+Brief description: 
+* Company setting GPS interface
+Request URL: 
+* GET https://api.realptt.com/ptt/gps
+Request example:
+* https://api.realptt.com/ptt/gps?interval_time=6
+Parameter: 
+Parameter nameRequiredTypeInstructioninterval_timeYintinterval time(s)Return example
+  {
+    "code":0,
+    "data":{
+      "interval_time":6
+    },
+    "msg":"success"
+  }6.2?Query positioning
+Brief description: 
+* Query location interface, query based on company id or group id or user account
+Request URL: 
+* GET https://api.realptt.com/ptt/gps?method=getGpsInfo
+Request example:
+* https://api.realptt.com/ptt/gps?method=getGpsInfo&groupId=10234&userAccount=test001
+Parameter: 
+Parameter nameRequiredTypeInstructiongroupIdNintQuery condition: group IDuserAccountNintQuery condition: 
+user accountNote: Both parameters are optional, priority userAccount > groupId, if the two parameters are not included, the query result is all user positioning information of the entire enterpriseReturn example
+{
+    "code":0,
+    "data":{
+        "total":4,
+        "userGpsInfoList":[
+            {
+                "direction":"0.000",
+                "elevation":"0.000",
+                "lat":"22.558729",
+                "lng":"113.954387",
+                "speed":"0.000",
+                "time":"2019-04-17 10:25:47",
+                "userName":"testq39"
+            },
+            {
+                "direction":"0.000",
+                "elevation":"0.000",
+                "lat":"22.612848",
+                "lng":"113.846362",
+                "speed":"0.000",
+                "time":"2020-08-22 15:59:53",
+                "userName":""
+            },
+            {
+                "direction":"0.000",
+                "elevation":"0.000",
+                "lat":"22.612801",
+                "lng":"113.846326",
+                "speed":"0.000",
+                "time":"2020-11-28 05:14:26",
+                "userName":""
+            },
+            {
+                "direction":"0.000",
+                "elevation":"0.000",
+                "lat":"22.612961",
+                "lng":"113.846392",
+                "speed":"0.000",
+                "time":"2019-12-06 16:28:50",
+                "userName":""
+            }
+        ]
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructionuserNameStringUser name latStringLatitudelngStringLongitudetimeStringPositioning timespeedStringspeeddirectionStringdirectionelevationStringelevation6.3?Query recording
+Brief description: 
+* Query the recording interface, query according to the group id or user account
+Request URL: 
+* GET https://api.realptt.com/ptt/audio?method=get
+Request example:
+* https://api.realptt.com/ptt/audio?method=get&group_id=920&start_time=2018-08-01 00:00:00&limit=10&page=1
+Parameter: 
+Parameter nameRequiredTypeInstructionlimitNintper page number, default 20, max 100pageNintpage, default 0start_timeNstringstart time of the querycodec_typeNintcoding type?(0:4K|1:8K)?default 0Optional query criteriaplease fill in one of the following parametersgroup_idYintgroup iduser_accountYstringuser accountReturn example
+{
+    "code": 0,
+    "data": {
+        "audios": [{
+            "download_url": "http://47.100.70.241:8080/voice?SpkId=23492130&time=2018_8_1&filename=2018_8_1 15_4_58.wav&CodecType=0",
+            "group_name": "test",
+            "id": 23492130,
+            "play_url": "http://47.100.70.241:8080/voice?SpkId=23492130&time=2018_8_1&filename=1&CodecType=0",
+            "time": "2018-08-01 15:04:58",
+            "user_name": "test16"
+        }, {
+            "download_url": "http://47.100.70.241:8080/voice?SpkId=23495346&time=2018_8_1&filename=2018_8_1 15_5_4.wav&CodecType=0",
+            "group_name": "test",
+            "id": 23495346,
+            "play_url": "http://47.100.70.241:8080/voice?SpkId=23495346&time=2018_8_1&filename=1&CodecType=0",
+            "time": "2018-08-01 15:05:04",
+            "user_name": "test16"
+        }, 
+        ...
+        ],
+        "pageSize": 3
+    },
+    "msg": "success"
+}Return parameter instruction 
+Parameter nameTypeInstructionidintrecord idtimestringrecord timegroup_namestringgroup nameuser_namestringuser nameplay_urlstringplay urldownload_urlstringdownload urlpageSizeinttotal page6.4?Recording statistics
+Brief description: 
+* An interface to count the recording data of all groups in the enterprise.
+Request URL: 
+* GET https://api.realptt.com/ptt/audioStatistics?method=getAll
+Request example:
+* https://api.realptt.com/ptt/audioStatistics?method=getAll&page=0&time=2021-05-07
+Parameter: 
+Parameter nameRequiredTypeInstructionpageYintpage, default 0timeYstringday of the queryReturn example
+{
+    "code":0,
+    "data":{
+        "total":2,
+        "audioStatisticsList":[
+            {
+                "callDuration":"00:03",
+                "callTimes":5,
+                "groupId":477282,
+                "groupName":"lyjTest1"
+            },
+            {
+                "callDuration":"00:28",
+                "callTimes":17,
+                "groupId":647014,
+                "groupName":" lyjTest2"
+            }
+        ]
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructioncallDurationstringTotal duration of group recording?The default is 4k encoding duration, if it is 8k encoding, the time needs to be halved?callTimesintTotal number of callsgroupIdlonggroup idgroupNamestringgroup name6.5?Group member recording statistics
+Brief description: 
+* Interface to count the user recording data of a certain group in the enterprise
+Request URL: 
+* GET https://api.realptt.com/ptt/audioStatistics?method=getByGroupId
+ 
+Request example:
+* https://api.realptt.com/ptt/audioStatistics?method=getByGroupId&page=0&time=2021-04-29&group_id=477282
+Parameter: 
+Parameter nameRequiredTypeInstructionpageYintpage, default 0timeYintday of the querygroup_idYstringgroup id of queryReturn example
+{
+    "code":0,
+    "data":{
+        "userAudioStatisticsList":[
+            {
+                "callDuration":"00:02",
+                "callTimes":1,
+                "userAccount":"test1",
+                "userId":1836318736,
+                "userName":"test1"
+            },
+            {
+                "callDuration":"00:07",
+                "callTimes":7,
+                "userAccount":"test2",
+                "userId":1836318747,
+                "userName":"test2"
+            },
+            {
+                "callDuration":"00:00",
+                "callTimes":1,
+                "userAccount":"test3",
+                "userId":1836318786,
+                "userName":"test3"
+            }
+        ],
+        "total":3
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructioncallDurationstringTotal duration of group recording?The default is 4k encoding duration, if it is 8k encoding, the time needs to be halved?callTimesintTotal number of callsuserIdlonguser iduserAccountstringuser accountuserNamestringuser name6.6?Query video
+Brief description: 
+* Query the video interface, query the video based on the user account
+Request URL: 
+* GET https://api.realptt.com/ptt/video?method=get
+Request example:
+* https://api.realptt.com/ptt/video?method=get&start_time=2019-07-02 00:00:00&user_account=zdh3&page=1&limit=20
+ 
+Parameter: 
+Parameter nameRequiredTypeInstructionpageNintpage, default 1limitNintone page number, default 20user_accountNstringuser account (call the entire company's video when the user account does not exist)start_timeYstringstart time of the queryReturn example
+{
+    "code": 0,
+    "data": {
+        "pageSize": 2,
+        "videos": [{
+            "id": 9,
+            "src": 328140,
+            "src_account": "zdh1",
+            "src_name": "zdh1",
+            "time": "2019-07-02 08:39:37",
+            "type": 0,
+            "url": "http://106.15.204.162:8070/video/2019/7/2/8-39-37-328140-4294967295.mp4"
+        }, {
+            "id": 11,
+            "src": 328140,
+            "src_account": "zdh1",
+            "src_name": "zdh1",
+            "time": "2019-07-02 08:40:40",
+            "type": 0,
+            "url": "http://106.15.204.162:8070/video/2019/7/2/8-40-40-328140-328853.mp4"
+        },
+        ...
+        ]
+    },
+    "msg": "success"
+}Return parameter instruction 
+Parameter nameTypeInstructionidintvideo idsrclongsender user idsrc_accountstringsender user accountsrc_namestringsender user nametimestringtimetypeintvideo type (0: Video monitor  1: Video call 2: Video transfer 4: Video return Other: Video upload)urlstringvideo file url6.7?Query upload file
+Brief description: 
+* Query the upload file interface, query the upload file based on the user account
+Request URL: 
+* GET https://api.realptt.com/ptt/uploadFile?method=get
+Request example:
+* https://api.realptt.com/ptt/uploadFile?method=get&page=1&limit=20&sort=0&user_account=zdh3&start_time=2019-07-02&start_time=2019-07-02
+ 
+Parameter: 
+Parameter nameRequiredTypeInstructionpageNintpage, default 1limitNintone page number, default 20user_accountNstringuser account (call the entire company's video when the user account does not exist)start_timeNstringstart time of the queryend_timeNstringend time of the querysortNstringsort type?0:ASC 1:DESC  default 0?Return example
+{
+    "code":0,
+    "data":{
+        "uploadFiles":[
+            {
+                "down_path":"http://localhost:9090/ptt/uploadFile?method=download&FileUrl=http://203.107.40.205:8501/2021_4_1/328140/2021-04-01-00-44-19.mp4&UserId=0&PicId=49&FileName=2021-04-01-00-44-19",
+                "file_name":"2021-04-01-00-44-19",
+                "file_type":"Video",
+                "id":49,
+                "recv_account":"-",
+                "recv_name":"-",
+                "sender_account":"-",
+                "sender_name":"-",
+                "upload_time":"2021-04-01 08:45:01"
+            },
+………
+            {
+                "down_path":"http://localhost:9090/ptt/uploadFile?method=download&FileUrl=http://203.107.40.205:8501/2021_4_2/327782/1617344133595.jpg&UserId=0&PicId=235&FileName=1617344133595",
+                "file_name":"1617344133595",
+                "file_type":"Picture",
+                "id":235,
+                "recv_account":"-",
+                "recv_name":"-",
+                "sender_account":"testq93",
+                "sender_name":"??q93",
+                "upload_time":"2021-04-02 14:15:35"
+            }
+        ],
+        "pageSize":17
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructionidintvideo idrecv_accountstringrecipient user accountrecv_namestringrecipient user namesender_accountstringsender user accountsender_namestringsender user nameupload_timestringupload timefile_nameintupload file namefile_typeintupload file typedown_pathstringupload file download url6.8?Statistical information
+Brief description: 
+* Statistical information interface
+ 
+Request URL: 
+* GET https://api.realptt.com/ptt/statistics
+Parameter: 
+* N/A
+Return example
+{
+    "code": 0,
+    "data": {
+        "info": {
+            "bill_account": 522,
+            "group_total": 247,
+            "remain_year_account": 0,
+            "user_bind_bill": 495,
+            "user_online": 16,
+            "user_total": 596
+        }
+    },
+    "msg": "success"
+}Return parameter instruction 
+Parameter nameTypeInstructionbill_accountinttotal order accountgroup_totalintnumber of groupsremain_year_accountintremaining year accountuser_bind_billintnumber of users in useuser_onlineintnumber of online usersuser_totalintnumber of users
+6.9?Query SOS Message
+Brief description: 
+* Query the SOS Message interface, query the SOS Message based on the user account
+Request URL: 
+* GET http://api.realptt.com/ptt/uploadFile?method=getSosMessage
+Request example:
+* http://api.realptt.com/ptt/uploadFile?method=getSosMessage&page=0&limit=20&sort=0&userAccount=zdh3&startTime=2022-03-01&endTime=2022-03-17
+Parameter: 
+Parameter nameRequiredTypeInstructionpageNintpage, default 0limitNintone page number, default 20userAccountNstringuser account (call the entire company's video when the user account does not exist)startTimeNstringstart time of the queryendTimeNstringend time of the querysortNstringsort type?0:ASC 1:DESC  default 0?Return example
+{
+    "code":0,
+    "data":{
+        "SOSMessageList":[
+            {
+                "content":"113.937416,22.551245",
+                "sendUserAccount":"test002",
+                "sendUserName":"3123123",
+                "time":"2022-03-01 13:41:44"
+            },
+            {
+                "content":"-nan,-nan",
+                "sendUserAccount":"-",
+                "sendUserName":"-",
+                "time":"2022-03-07 15:17:28"
+            },
+            {
+                "content":"113.937580,22.551449",
+                "sendUserAccount":"-",
+                "sendUserName":"-",
+                "time":"2022-03-10 16:30:55"
+            },
+             ……
+        ],
+        "pageSize":12
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructiontimestringSos message timesendUserAccountstringSend sos user accountsendUserNamestringSend sos user namecontentstringSos content6.10?Query Text Message
+Brief description: 
+* Query the text message interface, query the text message based on the user account
+Request URL: 
+* GET http://api.realptt.com/ptt/uploadFile?method=getTextMessage
+Request example:
+* http://api.realptt.com/ptt/uploadFile?method=getTextMessage&page=0&limit=20&sort=0&userAccount=test002&startTime=2022-08-01&endTime=2022-08-10
+Parameter: 
+Parameter nameRequiredTypeInstructionpageNintpage, default 0limitNintone page number, default 20userAccountNstringuser account (call the entire company's video when the user account does not exist)startTimeNstringstart time of the queryendTimeNstringend time of the querysortNstringsort type?0:ASC 1:DESC  default 0?Return example
+{
+    "code":0,
+    "data":{
+        "total":3,
+        "textMessageList":[
+            {
+                "content":"zzd+test?1",
+                "receiveUserAccount":"-",
+                "receiveUserName":"-",
+                "sendUserAccount":"test002",
+                "sendUserName":"3123123",
+                "time":"2022-08-03 17:39:35"
+            },
+            {
+                "content":"zzd+test=1",
+                "receiveUserAccount":"-",
+                "receiveUserName":"-",
+                "sendUserAccount":"test002",
+                "sendUserName":"3123123",
+                "time":"2022-08-03 17:40:21"
+            },
+            {
+                "content":"zzd+test=1",
+                "receiveUserAccount":"-",
+                "receiveUserName":"-",
+                "sendUserAccount":"test002",
+                "sendUserName":"3123123",
+                "time":"2022-08-03 17:40:57"
+            }
+        ]
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructiontimestringMessage sending timesendUserAccountstringSend text message user accountsendUserNamestringSend text message user namecontentstring message contentreceiveUserAccountstringreceive text message user accountreceiveUserNamestringreceive text message user name or group name6.11?Query Login Record
+      Brief description? 
+* Query the login record interface, query the user login record according to the user account number
+      Request URL? 
+* GET https://api.realptt.com/ptt/user?method=getLoginRecord
+      Request example?
+https://api.realptt.com/ptt/user?method=getLoginRecord&beginDate=2023-05-23&endDate=2023-05-29&userAccount=test
+
+Parameter? 
+Parameter nameRequiredTypeInstructionuserAccountYstringuser accountbeginDateYstringquery start date?yyyy-MM-dd?endDateYstringquery end date?yyyy-MM-dd?
+Return example
+{
+    "code":0,
+    "data":{
+         "loginRecord":[
+            {
+                "presence":1,
+                "recordTime":"2023-05-23 00:51:07",
+                "userId":328773
+            },
+            {
+                "presence":0,
+                "recordTime":"2023-05-23 01:17:22",
+                "userId":328773
+            },
+            {
+                "presence":1,
+                "recordTime":"2023-05-23 01:49:42",
+                "userId":328773
+            }
+      ......
+      ]
+    },
+    "msg":"success"
+}
+Return parameter instruction
+
+Parameter nameTypeInstructionpresenceint1-online, 0-offlinerecordTimestringonline or offline timeuserIdlonguser id6.12?Login statistics
+    Brief description? 
+* Login record statistics interface, count the number of people who have logged in, the number of people who have not logged in, and the total time of logging in according to the date
+    Request URL? 
+* GET https://api.realptt.com/ptt/loginStats?method=getLoginStats
+    Request example?
+https://api.realptt.com/ptt/loginStats?method=getLoginStats&beginDate=2023-05-23&endDate=2023-05-29
+
+    Parameter? 
+Parameter nameRequiredTypeInstructionbeginDateYstringquery start date?yyyy-MM-dd?endDateYstringquery end date?yyyy-MM-dd?
+    Return example
+{
+    "code":0,
+    "data":{
+        "loginUserNumber":23,
+        "unLoginUserNumber":283,
+        "minute":30572
+    },
+    "msg":"success"
+}
+    Return parameter instruction
+
+Parameter nameTypeInstructionloginUserNumberintnumber of logged-in usersunLoginUserNumberintnumber of unlogged usersminuteinttotal login time, per unit of minutes6.13?Login user statistics
+    Brief description? 
+* Statistics the login user interface, query the launch time of login users, and the last launch time
+    Request URL? 
+* GET https://api.realptt.com/ptt/loginStats?method=getLoginUserStats
+    Request example?
+https://api.realptt.com/ptt/loginStats?method=getLoginUserStats&beginDate=2023-05-24&endDate=2023-05-24&userAccount=test&limit=15&page=0
+
+    Parameter? 
+Parameter nameRequiredTypeInstructionuserAccountNstringuser account (query the whole enterprise when the user account is not filled in)beginDateYstringquery start date?yyyy-MM-dd?endDateYstringquery end date?yyyy-MM-dd?pageNintpage, default 0limitNintone page number, default 15
+    Return example
+{
+    "code":0,
+    "data":{
+        "total":1,
+        "loginUserSituations":[
+            {
+                "account":"test",
+                "minute":1232,
+                "name":"tset",
+                "onlineTime":"2023-05-24 22:59:57",
+                "userId":328773
+            }
+        ]
+    },
+    "msg":"success"
+}
+    Return parameter instruction
+
+Parameter nameTypeInstructionminuteintonline time, per unit of minutesnamestringuser nameuserIdlonguser idaccountstringuser accountonlineTimestringlast online time6.14?No logged-in user statistics
+    Brief description? 
+* Statistics not login user interface, query not login user
+    Request URL? 
+* GET https://api.realptt.com/ptt/loginStats?method=getNotLoginUserStats
+    Request example?
+https://api.realptt.com/ptt/loginStats?method=getNotLoginUserStats&beginDate=2023-05-24&endDate=2023-05-24&limit=15&page=0
+
+    Parameter? 
+Parameter nameRequiredTypeInstructionbeginDateYstringquery start date?yyyy-MM-dd?endDateYstringquery end date?yyyy-MM-dd?pageNintpage, default 0limitNintone page number, default 15
+    Return example
+{
+    "code":0,
+    "data":{
+        "total":52,
+        "notLoginUsers":[
+        {
+                "account":"test",
+                "name":"test"            
+        }?
+        {
+                "account":"djd0",
+                "name":"djd0"            
+        }?
+        {
+                "account":"cteset1",
+                "name":"cteset1"            
+        }
+        ......
+        ]
+    },
+    "msg":"success"
+}
+    Return parameter instruction
+Parameter nameTypeInstructionnamestringuser nameaccountstringuser account6.15?Query drawing map
+Brief description? 
+* Query the enterprise drawing map interface
+Request URL? 
+* GET http://api.realptt.com/ptt/orgMap?method=getOrgMap
+Request example?
+http://api.realptt.com/ptt/orgMap?method=getOrgMap&limit=15&page=0
+Parameter? 
+Parameter nameRequiredTypeInstructionpageNintpage number, default 0limitNintper page quantity, default 15mapIdNintmap id
+    Return example
+{
+    "code":0,
+    "data":{
+        "total":1,
+        "orgMapList":[
+            {
+                "all_alert":true,
+                "color":"#3B4EFF",
+                "config":{
+                    "flag_info":"",
+                    "geoType":"Area",
+                    "relatedGtroup":""
+                },
+                "dispatchUserIds":[
+                    328773,
+                    329332,
+                    329182
+                ],
+                "fence_time_list":[
+                    {
+                        "end":"16:00",
+                        "start":"14:00"
+                    }
+                ],
+                "id":9,
+                "in_alert":true,
+                "is_fence_alert_time":true,
+                "name":"????11",
+                "noInfoWindow":true,
+                "path":[
+                    {
+                        "lat":"22.555133451577195",
+                        "lng":"113.94599179712166"
+                    },
+                    {
+                        "lat":"22.55192925411706",
+                        "lng":"113.94570433935857"
+                    },
+                    {
+                        "lat":"22.552096141259717",
+                        "lng":"113.94847112032839"
+                    },
+                    {
+                        "lat":"22.555266958171003",
+                        "lng":"113.94868671365072"
+                    }
+                ],
+                "type":"Area",
+                "user_map":{
+                    "329028":"329028"
+                }
+            }
+        ]
+    },
+    "msg":"success"
+}
+Return parameter instruction
+
+Parameter nameTypeInstructionall_alertbooleanwhether all users alarmidintmap idcolorStringmap colorfence_time_list[]Fence time periodin_alertbooleanwhether the alarm when enteringis_fence_alert_timebooleanwhether to set up the fence time periodnameStringmap namepath[]map point longitude and latitudetypeStringType, Area-fenceuser_mapObjectAlarm user iddispatchUserIds[]Dispatch desk user id6.16?Add drawing map 
+Brief description? 
+* Add the enterprise drawing map interface
+Request URL? 
+* GET http://api.realptt.com/ptt/orgMap?method=addOrgMap
+Request example?
+http://api.realptt.com/ptt/orgMap?method=addOrgMap&name=test2&path=22.581865539189216,113.89557889191826;22.569317796725326,113.89356668757658;22.57732712745422,113.91325754434878;22.57732712745422,113.91325754434878;22.57732712745422,113.91325754434878;&color=%2394298B
+Parameter? 
+Parameter nameRequiredTypeInstructionnameYStringmap namepathYStringThe latitude and longitude values of map points, each point is separated by “;”and the latitude and longitude values of a point are separated by“,”with latitude in front and longitude in the backcolorYStringmap color, such as %234298B
+    Return example
+{
+    "code": 0,
+    "data": {},
+    "msg": "success"
+}6.17?Modify drawing map 
+Brief description? 
+* Modify the enterprise drawing map interface
+Request URL? 
+* GET http://api.realptt.com/ptt/orgMap?method=editOrgMap
+Request example?
+http://api.realptt.com/ptt/orgMap?method=editOrgMap&mapId=25&mapName=test3
+Parameter? 
+Parameter nameRequiredTypeInstructionmapIdYintmap idmapNameNStringmap namemapColorNStringmap color, such as %234298BalertTimeNStringFence time period, such as 14:00,16:00;17:00,18:00;allAlertNintwhether all users alarm, 0-no alarm, 1-alarminAlertNintwhether to alarm when entering, 0-no alarm, 1-alarmalertUserIdNStringAlert user ids, separated by commasdispatchUserIdNStringDispatch desk user id, separated by commas
+    Return example
+{
+    "code": 0,
+    "data": {},
+    "msg": "success"
+}6.18?Delete drawing map 
+Brief description? 
+* Delete the enterprise drawing map interface
+Request URL? 
+* GET http://api.realptt.com/ptt/orgMap?method=deleteOrgMap
+Request example?
+http://api.realptt.com/ptt/orgMap?method=deleteOrgMap&mapId=25
+Parameter? 
+Parameter nameRequiredTypeInstructionmapIdYintmap id
+    Return example
+{
+    "code": 0,
+    "data": {},
+    "msg": "success"
+}6.19?Query indoor map
+Brief description? 
+* Query the enterprise indoor map interface
+Request URL? 
+* GET http://api.realptt.com/ptt/orgIndoorMap?method=getOrgIndoorMap
+Request example?
+http://api.realptt.com/ptt/orgIndoorMap?method=getOrgIndoorMap
+Parameter? 
+* N/A
+    Return example
+{
+    "code":0,
+    "data":{
+        "orgIndoorMap":{
+            "maps":[
+                {
+                    "image":"/ptt/upload/indoormap/5/1691058850605.jpg",
+                    "x":0,
+                    "width":964,
+                    "name":"1",
+                    "y":-1,
+                    "height":473
+                },
+                {
+                    "image":"/ptt/upload/indoormap/5/1691058864680.jpg",
+                    "x":481,
+                    "width":964,
+                    "name":"2",
+                    "y":-1,
+                    "height":473
+                }
+            ],
+            "devices":[
+                {
+                    "major":1,
+                    "minor":1,
+                    "x":278,
+                    "y":398
+                },
+                {
+                    "major":20,
+                    "minor":20,
+                    "x":205,
+                    "y":527
+                },
+                {
+                    "major":3,
+                    "minor":3,
+                    "x":146,
+                    "y":388
+                },
+                {
+                    "major":4,
+                    "minor":4,
+                    "x":207,
+                    "y":270
+                },
+                {
+                    "major":5,
+                    "minor":5,
+                    "x":279,
+                    "y":350
+                }
+            ]
+        }
+    },
+    "msg":"success"
+}
+
+Return parameter instruction
+
+Parameter nameTypeInstructionmaps[]Map picture arrayimageStringPicture path, call to upload the indoor picture interface to obtainnameStringPicture namewidthStringPicture widthheightStringPicture heightxintLower left corner of the x coordinates of the mapyintLower left corner of the y coordinates of the mapdevices[]Bluetooth beacon number groupmajorintPrimary marker value of the Bluetooth beaconminorintSecondary marker value of the Bluetooth beacon6.20?Update indoor map
+Brief description? 
+* Update the enterprise indoor map interface
+Request URL? 
+* GET http://api.realptt.com/ptt/orgIndoorMap?method=updateOrgIndoorMap
+Request example?
+http://api.realptt.com/ptt/orgIndoorMap?method=updateOrgIndoorMap
+Parameter? 
+Parameter nameRequiredTypeInstructionmapsYStringFloor map array json, such as [{"image":"/ptt/upload/indoormap/5/1691058850606jpg","x":0,"y":-1,"height":473,"width":964,"name":"1"}]devicesYStringBluetooth beacon array json, such as [{"major":10802,"minor":9056,"x":272,"y":266}]6.21?Upload indoor pictures
+Brief description? 
+* Upload the enterprise indoor picture interface
+Request URL? 
+* GET http://api.realptt.com/ptt/orgIndoorMap?method=uploadOrgIndoorMap
+Request example?
+http://api.realptt.com/ptt/orgIndoorMap?method=uploadOrgIndoorMap
+Parameter? 
+* FormData Objects, the form fields are file and saveFileName respectively, file is the image upload field, and saveFileName is the image name
+Return example
+{
+    "code":0,
+    "data":{
+        "fileName":"/ptt/upload/indoormap/5/1691474498548.jpg"
+    },
+    "msg":"success"
+}
+Return parameter instruction
+
+Parameter nameTypeInstructionfileNameStringImage path
+6.22?Send message
+Brief description? 
+* Send messages to users or groups. Note that the message content length is limited to 400 bytes, and the sending frequency is limited to 10 messages per second, otherwise the sending will fail.
+Request URL? 
+* GET http://api.realptt.com/ptt/msgServer?method=sendMsg
+Request example?
+http://api.realptt.com/ptt/msgServer?method=sendMsg
+Parameter? 
+Parameter nameRequiredTypeInstructiongroupIdNintGroup id, required when sending messages to the groupuserIdNintUser ID, required when sending messages to usersdataYStringMessage contentReturn example
+{
+    "code":0,
+    "data":{
+    },
+    "msg":"success"
+}6.23?Recording statistics(temporary group)
+Brief description: 
+* An interface to count the recording data of all temporary  groups in the enterprise.
+Request URL: 
+* GET https://api.realptt.com/ptt/audioStatistics?method=getAllTemporary
+Request example:
+* https://api.realptt.com/ptt/audioStatistics?method=getAllTemporary&start_time=2021-05-07
+Parameter: 
+Parameter nameRequiredTypeInstructionstart_timeYstringday of the queryReturn example
+{
+    "code":0,
+    "data":{
+        "total":2,
+        "audioStatisticsList":[
+            {
+                "callDuration":"00:03",
+                "callTimes":5,
+                "groupId":477282,
+                "groupName":"lyjTest1"
+            },
+            {
+                "callDuration":"00:28",
+                "callTimes":17,
+                "groupId":647014,
+                "groupName":" lyjTest2"
+            }
+        ]
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructioncallDurationstringTotal duration of group recording?The default is 4k encoding duration, if it is 8k encoding, the time needs to be halved?callTimesintTotal number of callsgroupIdlonggroup idgroupNamestringgroup name
+7?Agent related interface
+Note?All agent-related interfaces need to be logged in to the agent platform before they can be operated
+7.1?Agent transaction record query
+Brief description: 
+* Agent transaction record query interface
+Request URL: 
+* GET https://api.realptt.com/ptt/proxyTx
+Request example:
+* https://api.realptt.com/ptt/proxyTx?method=getTxRecord &limit=10&page=0&startDay=2021-01-01&endDay=2021-04-07 &secondPwd=1411678a0b9e25ee2f7c8b2f7ac92b6a74b3f9c5&key=bill
+Parameter: 
+Parameter nameRequiredTypeInstructionpageNIntpage, default 1limitNIntDisplay number per page, default 20startDayNStringstart time of the queryendDayNStringend time of the querysecondPwdYStringThe second-level password of the agent platform, which needs to be encrypted by sha1 before passing the parameters
+hex_sha1(value)keyNStringQuery keywords 
+Return example
+{
+    "code":0,
+    "data":{
+        "total":6,
+        "recordList":[
+            {
+                "billDes":"Succeed to buy order,Order Number:11741,Company Account:zcm,User QTY:5,Start Time:2018-7-20,End Time:2018-11-20",
+                "money":-200,
+                "moneyDes":"Buy monthly order",
+                "moneyRemain":0,
+                "number":0,
+                "numberRemain":0,
+                "time":"2018-07-20 09:32:07",
+                "tradeType":2,
+                "tradeTypeStr":"Expenditure amount"
+            },
+            {
+                "billDes":"",
+                "money":200,
+                "moneyDes":"Convert account to money",
+                "moneyRemain":200,
+                "number":0,
+                "numberRemain":0,
+                "time":"2018-07-20 09:31:38",
+                "tradeType":1,
+                "tradeTypeStr":"Recharge amount"
+            },
+            {
+                "billDes":"",
+                "money":0,
+                "moneyDes":"Convert account to money",
+                "moneyRemain":0,
+                "number":-2,
+                "numberRemain":0,
+                "time":"2018-07-20 09:31:38",
+                "tradeType":11,
+                "tradeTypeStr":"Recharge Account"
+            },
+            {
+                "billDes":"Succeed to replace account with order,Order Number:1962,Company Account:zcm,User QTY:5,Start Time:2017-3-25,End Time:2018-3-31",
+                "money":0,
+                "moneyDes":"Replace account with order,User QTY:5",
+                "moneyRemain":0,
+                "number":-5,
+                "numberRemain":2,
+                "time":"2017-03-25 18:26:56",
+                "tradeType":12,
+                "tradeTypeStr":"Add bill using account"
+            },
+            {
+                "billDes":"Succeed to replace account with order,order Number:857,company Account:hktest,user QTY:3,start Time:2016-9-28,end Time:2017-9-30",
+                "money":0,
+                "moneyDes":"Replace account with order,user QTY:3",
+                "moneyRemain":0,
+                "number":-3,
+                "numberRemain":7,
+                "time":"2016-09-28 08:48:21",
+                "tradeType":12,
+                "tradeTypeStr":"Add bill using account"
+            },
+            {
+                "billDes":"",
+                "money":0,
+                "moneyDes":"",
+                "moneyRemain":0,
+                "number":10,
+                "numberRemain":10,
+                "time":"2016-04-19 15:32:11",
+                "tradeType":11,
+                "tradeTypeStr":"Recharge Account"
+            }
+        ]
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructionbillDesStringOrder log descriptionmoneyDoubleConsumption amountmoneyDesStringTransaction resultmoneyRemainDoubleThe remaining amount of the current agent after this transactionnumberintNumber of trading accountsnumberRemainintNumber of remaining accountstimeStringtransaction hourtradeTypeintTransaction type identificationtradeTypeStrStringTransaction type 
+
+
+8?Company Administrator Interface
+8.1?Query Administrator
+Brief description: 
+* Query the company administrator list interface
+Request URL: 
+* GET https://api.realptt.com/ptt/organization?method=listAccount
+Request example:
+* https://api.realptt.com/ptt/organization?method=listAccount
+Parameter: 
+Parameter nameRequiredTypeInstructionNo ParamterReturn example
+{
+    "code":0,
+    "data":{
+        "total":1,
+        "accountList":[
+            {
+                "account":"test111",
+                "extraPrivilege":3,
+                "patrolPrivilege":2047,
+                "privilege":9223372036854776000
+            }
+        ]
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructionaccountStringCompany administrator accountprivilegelongAuthority (see appendix-enterprise administrator authority for detailed values)
+The value is the OR ("|") operation for all assigned permission valuesextraPrivilegelongAdditional permissions field (see appendix-additional permissions for enterprise administrators for detailed values)
+The value is the OR ("|") operation for all assigned permission valuespatrolPrivilegelongPatrol 2.0 platform permission field (see appendix-enterprise administrator patrol 2.0 platform permission for detailed values)
+The value is the OR ("|") operation for all assigned permission values8.2?Add Company Administrator Account
+Brief description: 
+* Company add administrator account interface
+ 
+Request URL: 
+* GET https://api.realptt.com/ptt/organization?method=addAccount
+Request example:
+* https://api.realptt.com/ptt/organization?method=addAccount&account=test001&passwordDes=3d4f2bf07dc1be38b20cd6e46949a1071f9d0e3d&privilege=9223372036854775807&extraPrivilege=3&patrolPrivilege=2047	
+Parameter: 
+Parameter nameRequiredTypeInstructionaccountYstringAdd an administrator accountpasswordDesYstringPassword sha1 encrypted value, hex_sha1(pwd)privilegeNlongAdministrator authority value, default 0 without any authorityextraPrivilegeNlongAdministrator additional authority value, default 0 without any authoritypatrolPrivilegeNlongAdministrator patrol 2.0 platform permission value, default 0 without any permissionReturn example
+{
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  } 
+8.3?Modify Privilege Of Company Account
+Brief description: 
+* Company modify privilege of account interface
+Request URL: 
+* GET https://api.realptt.com/ptt/organization?method=editAccountPrivilege
+Request example:
+* https://api.realptt.com/ptt/organization?method=editAccountPrivilege&account=test001&privilege=9223372036854775807&extraPrivilege=3&patrolPrivilege=2047
+Parameter: 
+Parameter nameRequiredTypeInstructionaccountYstringAdministrator accountprivilegeNlongAdministrator authority value, do not modify the value if it is not passedextraPrivilegeNlongAdministrator additional permission value, do not modify if the value is not passedpatrolPrivilegeNlongAdministrator patrol 2.0 platform permission value, no modification will be made if the value is not passedReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }8.4?Recover the administrator password
+Brief description: 
+* Company recovery administrator password interface, the administrator account password is restored to 111111 after calling
+Request URL: 
+* GET https://api.realptt.com/ptt/organization?method=resetAccountPassword
+Request example:
+* https://api.realptt.com/ptt/organization?method=resetAccountPassword&account=test001
+Parameter: 
+Parameter nameRequiredTypeInstructionaccountYstringAdministrator accountReturn example
+{
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  } 
+8.5?Delete administrator
+Brief description: 
+* Company delete administrator account interface, directly delete the administrator account after calling
+Request URL: 
+* GET https://api.realptt.com/organization?method=deleteAccount
+Request example:
+* https://api.realptt.com/organization?method=deleteAccount&accpunt=test001
+* Parameter: 
+Parameter nameRequiredTypeInstructionaccountYstringAdministrator account* Return example
+{
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  } 
+
+
+9?Company Department
+9.1?Query department
+Brief description: 
+* Query the current company department list interface
+Request URL: 
+* GET https://api.realptt.com/ptt/orgDepartment?method=listDepartment
+Request example:
+* https://api.realptt.com/ptt/orgDepartment?method=listDepartment&limit=20&page=0&account=test
+Parameter: 
+Parameter nameRequiredTypeInstructionlimitNintNumber of pages, default is 20, maximum is 100pageNintPage number, default 0Other query conditionsN--Only one of the following parameters can be filled innameNstringDepartment name, fuzzy field queryaccountNstringDepartment account number, fuzzy field queryReturn example
+{
+    "code":0,
+    "data":{
+        "total":1,
+        "departmentList":[
+            {
+                "account":"1",`
+                "id":3,
+                "name":"1",
+                "orgId":5,
+                "privilege":65535
+            }
+        ]
+    },
+    "msg":"success"
+}Return parameter instruction 
+Parameter nameTypeInstructionidlongDepartment IDaccountstringDepartment accountnamestringDepartment nameorgIdintCompany IDprivilegelongDepartment authority (see appendix-department account authority for details)
+The value is the OR ("|") operation for all assigned permission values9.2?Add department
+Brief description: 
+* Company add department interface
+Request URL: 
+* GET https://api.realptt.com/ptt/orgDepartment?method=addDepartment
+ 
+Request example:
+* https://api.realptt.com/ptt/orgDepartment?method=addDepartment& account=corget&name=bruce&passwordDes=3d4f2bf07dc1be38b20cd6e46949a1071f9d0e3d&privilege=65535
+Parameter: 
+Parameter nameRequiredTypeInstructionaccountYstringDepartment accountpasswordDesYstringPassword SHA1 encrypted value, hex_sha1(pwd)nameYstringDepartment nameprivilegeNlongDepartment authority (see appendix-department account authority for details)
+The value is the OR ("|") operation for all assigned permission valuesReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }9.3?Modify department
+Brief description: 
+* Interface for modifying department account information of company
+ 
+Request URL: 
+* GET https://api.realptt.com/ptt/orgDepartment?method=editDepartment
+Request example:
+* https://api.realptt.com/ptt/orgDepartment?method=editDepartment&departmentId=1&passwordDes=356a192b7913b04c54574d18c28d46e6395428ab&name=qwe&privilege=2047
+Parameter: 
+Parameter nameRequiredTypeInstructiondepartmentIdYstringDepartment ID, it will be returned when querying the department list, the department information needs to be modified according to this fieldpasswordDesNstringPassword SHA1 encrypted value, hex_sha1(pwd)nameNstringDepartment nameprivilegeNlongDepartment authority (see appendix-department account authority for details)
+The value is the OR ("|") operation for all assigned permission valuesDescription: Pass the parameter of which field to modify which field, and do not modify it if it is notReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }9.4?Delete department 
+Brief description: 
+* Company delete department interface
+Request URL: 
+* GET https://api.realptt.com/ptt/orgDepartment?method=deleteDepartment
+Request example:
+* https://api.realptt.com/ptt/orgDepartment?method=deleteDepartment&departmentId=1
+Parameter: 
+Parameter nameRequiredTypeInstructiondepartmentIdYlongDepartment ID, it will be returned when querying the department list, you need to delete the department according to this fieldReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  } 
+ 
+9.5?Add department user
+Brief description: 
+* Company add department user interface
+Request URL: 
+* GET https://api.realptt.com/ptt/orgDepartment?method=addDepartmentUser
+Request example:
+* https://api.realptt.com/ptt/orgDepartment?method=addDepartmentUser&departmentId=1&userId=65538
+Parameter: 
+Parameter nameRequiredTypeInstructiondepartmentIdYlongDepartment ID, it will be returned when querying the department list, you need to add department users based on this fielduserIdYlongNeed to join the user ID of the current departmentReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  } 
+9.6?Remove (Not delete) department user 
+Brief description: 
+* Company remove (not delete) department user interface
+Request URL: 
+* GET https://api.realptt.com/ptt/orgDepartment?method=removeDepartmentUser
+Request example:
+* https://api.realptt.com/pttt/orgDepartment?method=removeDepartmentUser&departmentId=1&userId=65538
+Parameter: 
+Parameter nameRequiredTypeInstructiondepartmentIdYlongDepartment ID, it will be returned when querying the department list, you need to add department users based on this fielduserIdYlongNeed to remove the user ID of the current departmentReturn example
+  {
+    "code": 0,
+    "data": {
+    },
+    "msg": "success"
+  }Appendix
+1?Return code 
+codemsgInstruction0successsuccessful1...error1001notLogginnot login1002noRightno rights1003parameterErrorparameter error1004noMethodno method2?Information of the user rights
+* Multi-rights through exclusive OR to get it.
+TypeInstruction1Contact2Single call4Change group8Do not disturb if private calling16Record64Monitor128Show group members512Stun1024Platform audio2048GPS positioning4096View location8192Receive car order32768Forbidden to call65536Receive SOS2097152Last group4194304Computer dispatching account8388608Group APP16777216Stun protection3?Bill function
+* Multi-rights through exclusive OR to get it.
+TypeTnstruction1Intercom2Calling the car4Video8Positioning16Recording32Broadcast64Patrol4?Trade type
+TypeInstruction1recharge amount2amount paid3donation amount4refund5correction of recharge error6integral recharge7others8move out company9move into company11recharge account12bill using account15roll out account16roll in account17recharge amount(agent give to sub-agent)20rebate25recharge message26recharge order taking 5?User Type
+typeInstruction0General User1Cell Phone2Interphone3Law Enforcement Recorder4Camera5Dispatcher6Police7Doctor8Truck9Taxi6?Company Administrator Account Rights
+* Multi-rights through exclusive OR to get it.
+typeInstruction1?20?View user2?21?Add user4?22?Edit user8?23?Delete user16?24?View group32?25?Add group64?26?Edit group128?27?Delete group256?28?View order512?29?Manager order1024?210?View department2048?211?Add department4096?212?Edit department8192?213?Delete dpartment228Patrol NFC management229View patrol task230Add patrol task231Edit patrol task232Delete patrol task233View patrol point234Add patrol point235Edit patrol point236Delete patrol point237View patrol route238Add patrol route239Edit patrol route240Delete patrol route241View patrol plan242Add patrol plan243Edit patrol plan244Delete patrol plan245Patrol dispatcher user246Patrol user247Patrol task record248Patrol record249Patrol calendar report250View video251View upload file252View audio257Edit password258Set Positioning interval259Set expiration reminder260User log261User login record262Statistics7?Additional Rights For Company Administrator Account
+* Multi-rights through exclusive OR to get it.
+typeInstruction1Delete video2Delete audio8?Company Administrator Account Patrol 2.0 Platform Rights
+* Multi-rights through exclusive OR to get it.
+typeInstruction1Edit patrol point2Edit patrol route4Edit patrol plan8Edit plan group16Edit user32Edit user group64Edit user patrol plan128Edit mailing list256Edit company information512Edit console settings1024Template addition function9?Department account permissions
+* Multi-rights through exclusive OR to get it.
+typeInstruction1View user2Edit user4Edit budy8Add group16View group32Edit group64Add sub department128View sub department256View video512View audio1024Modifu password2048View upload file4096View the end time of the user's order8192Delete video16384Delete audio32768Edit user password 
+ 
