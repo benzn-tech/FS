@@ -1,0 +1,21 @@
+{
+  "name": "fieldsightai-infra",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "synth": "npx cdk synth",
+    "deploy": "npx cdk deploy --all",
+    "diff": "npx cdk diff",
+    "destroy": "npx cdk destroy --all"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.170.0",
+    "constructs": "^10.0.0"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.170.0",
+    "typescript": "^5.0.0"
+  }
+}

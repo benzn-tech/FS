@@ -1,0 +1,210 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: FieldSightAI Lambda functions
+
+# ---------------------------------------------------------------------------
+# Globals — applied to all Lambda functions unless overridden
+# ---------------------------------------------------------------------------
+Globals:
+  Function:
+    Runtime: python3.13
+    Timeout: 300          # 5 minutes max per function
+    MemorySize: 512
+    Architectures: [x86_64]
+    Environment:
+      Variables:
+        # Secrets pulled from SSM at runtime — do NOT hardcode values here
+        DB_CONNECTION_STRING: !Ref DbConnectionString
+    Layers:
+      - !Ref SharedLayer
+
+# ---------------------------------------------------------------------------
+# Parameters — override at deploy time
+# ---------------------------------------------------------------------------
+Parameters:
+  VideosBucket:
+    Type: String
+    Default: fsai-videos
+  TranscriptsBucket:
+    Type: String
+    Default: fsai-transcripts
+  EventBusName:
+    Type: String
+    Default: fieldsightai-events
+  DbConnectionString:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /fieldsightai/db_connection_string
+
+# ---------------------------------------------------------------------------
+# Resources
+# ---------------------------------------------------------------------------
+Resources:
+
+  # Shared layer: psycopg2, requests, and the shared/ helpers
+  SharedLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: fieldsightai-shared
+      Description: Shared dependencies for all FieldSightAI Lambdas
+      ContentUri: layer/
+      CompatibleRuntimes: [python3.13]
+      CompatibleArchitectures: [x86_64]
+    Metadata:
+      BuildMethod: python3.13
+      BuildArchitecture: x86_64
+
+  # ---------------------------------------------------------------------------
+  # ingest_video — polls RealPTT every 5 min + handles manual retries
+  # RealPTT has no webhooks — scheduled polling is the ingestion mechanism.
+  # ---------------------------------------------------------------------------
+  IngestVideoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: fieldsightai-ingest-video
+      CodeUri: .
+      Handler: ingest_video.handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/fieldsightai-ingest-video-role'
+      Timeout: 600           # 10 min — video streaming can be slow
+      MemorySize: 1024       # larger for multipart buffer
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:fieldsightai-ingest-video-dlq'
+      Environment:
+        Variables:
+          S3_VIDEO_BUCKET: !Ref VideosBucket
+          POLL_LOOKBACK_MINUTES: '3'
+      Events:
+        ScheduledPoll:
+          Type: Schedule
+          Properties:
+            Schedule: rate(2 minutes)
+            Description: Poll RealPTT for new videos every 2 minutes
+            Enabled: true
+        RetryRequested:
+          Type: EventBridgeRule
+          Properties:
+            EventBusName: !Ref EventBusName
+            Pattern:
+              source: [fieldsightai.api]
+              detail-type: [retry-requested]
+
+  # ---------------------------------------------------------------------------
+  # trigger_transcription — S3 PUT trigger on videos bucket
+  # ---------------------------------------------------------------------------
+  TriggerTranscriptionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: fieldsightai-trigger-transcription
+      CodeUri: .
+      Handler: trigger_transcription.handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/fieldsightai-trigger-transcription-role'
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:fieldsightai-trigger-transcription-dlq'
+      Environment:
+        Variables:
+          S3_VIDEO_BUCKET: !Ref VideosBucket
+          S3_TRANSCRIPT_BUCKET: !Ref TranscriptsBucket
+      Events:
+        # S3 PUT on the videos bucket triggers this via EventBridge S3 notifications.
+        # Enable EventBridge notifications on the videos bucket (one-time CLI command):
+        #   aws s3api put-bucket-notification-configuration \
+        #     --bucket fieldsightai-videos \
+        #     --notification-configuration '{"EventBridgeConfiguration":{}}'
+        VideoUploaded:
+          Type: EventBridgeRule
+          Properties:
+            # S3 emits to the DEFAULT EventBridge bus
+            Pattern:
+              source: [aws.s3]
+              detail-type: [Object Created]
+              detail:
+                bucket:
+                  name: [!Ref VideosBucket]
+                object:
+                  key:
+                    - suffix: raw.mp4
+
+  # ---------------------------------------------------------------------------
+  # process_transcript — EventBridge trigger (AWS Transcribe state change)
+  # ---------------------------------------------------------------------------
+  ProcessTranscriptFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: fieldsightai-process-transcript
+      CodeUri: .
+      Handler: process_transcript.handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/fieldsightai-process-transcript-role'
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:fieldsightai-process-transcript-dlq'
+      Environment:
+        Variables:
+          S3_TRANSCRIPT_BUCKET: !Ref TranscriptsBucket
+      Events:
+        TranscribeComplete:
+          Type: EventBridgeRule
+          Properties:
+            # Transcribe emits to the DEFAULT bus, not our custom bus
+            Pattern:
+              source: [aws.transcribe]
+              detail-type: [Transcribe Job State Change]
+              detail:
+                TranscriptionJobStatus: [COMPLETED, FAILED]
+
+  # ---------------------------------------------------------------------------
+  # export_to_aconex — synchronous invocation from Next.js API route
+  # ---------------------------------------------------------------------------
+  ExportToAconexFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: fieldsightai-export-to-aconex
+      CodeUri: .
+      Handler: export_to_aconex.handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/fieldsightai-export-aconex-role'
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:fieldsightai-export-aconex-dlq'
+
+  # ---------------------------------------------------------------------------
+  # export_to_safebase — synchronous invocation from Next.js API route
+  # ---------------------------------------------------------------------------
+  ExportToSafebaseFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: fieldsightai-export-to-safebase
+      CodeUri: .
+      Handler: export_to_safebase.handler
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/fieldsightai-export-safebase-role'
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !Sub 'arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:fieldsightai-export-safebase-dlq'
+
+# ---------------------------------------------------------------------------
+# Outputs — Lambda ARNs for wiring into CDK stack and Next.js env
+# ---------------------------------------------------------------------------
+Outputs:
+  IngestVideoArn:
+    Value: !GetAtt IngestVideoFunction.Arn
+    Export:
+      Name: FieldSightAI-IngestVideoArn
+
+  TriggerTranscriptionArn:
+    Value: !GetAtt TriggerTranscriptionFunction.Arn
+    Export:
+      Name: FieldSightAI-TriggerTranscriptionArn
+
+  ProcessTranscriptArn:
+    Value: !GetAtt ProcessTranscriptFunction.Arn
+    Export:
+      Name: FieldSightAI-ProcessTranscriptArn
+
+  ExportToAconexArn:
+    Value: !GetAtt ExportToAconexFunction.Arn
+    Export:
+      Name: FieldSightAI-ExportToAconexArn
+
+  ExportToSafebaseArn:
+    Value: !GetAtt ExportToSafebaseFunction.Arn
+    Export:
+      Name: FieldSightAI-ExportToSafebaseArn
