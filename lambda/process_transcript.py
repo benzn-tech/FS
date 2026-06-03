@@ -219,39 +219,41 @@ def handler(event: dict, context) -> dict:
         _set_failed(session_id, f"Transcript parse error: {exc}")
         raise
 
-    # Determine actual recording duration from transcript metadata or last segment
-    audio_duration: float = 0.0
+    # Determine actual recording duration from Transcribe's audio_durations metadata.
+    # This reflects the real file length regardless of how much speech was captured.
+    # Never fall back to last-segment end_time for this — that's speech duration, not
+    # file duration, and would wrongly SKIP long recordings with little speech.
+    file_duration: float = 0.0
     try:
         audio_meta = transcript_json.get("results", {}).get("audio_durations", [])
         if audio_meta:
-            audio_duration = float(audio_meta[0].get("duration_in_seconds", 0))
-        elif segments:
-            audio_duration = float(segments[-1]["end_time"])
+            file_duration = float(audio_meta[0].get("duration_in_seconds", 0))
     except Exception:
         pass
 
-    # Skip recordings that are too short — likely accidental activations
-    if audio_duration > 0 and audio_duration < MIN_DURATION_SECS and not segments:
+    # speech_duration: end time of last speech segment (underestimates file length
+    # for recordings with long silences, but is the only option when audio_durations
+    # metadata is absent from the Transcribe output — common for very short files).
+    speech_duration: float = float(segments[-1]["end_time"]) if segments else 0.0
+
+    # Use file_duration when available (authoritative); fall back to speech_duration.
+    # The fallback is safe here: for a legitimate long recording with little speech,
+    # the last segment end_time is still typically > 30s. Only true accidental presses
+    # (no speech, or speech ending within the first few seconds) will be caught.
+    skip_duration = file_duration if file_duration > 0 else speech_duration
+
+    if skip_duration > 0 and skip_duration < MIN_DURATION_SECS:
         logger.info(
-            "Session %s is %.1fs — below %ds minimum with no transcript, marking SKIPPED",
-            session_id, audio_duration, MIN_DURATION_SECS,
+            "Session %s is %.1fs — below %ds minimum, marking SKIPPED",
+            session_id, skip_duration, MIN_DURATION_SECS,
         )
         execute(
             "UPDATE sessions SET status = 'SKIPPED', duration_secs = %s, updated_at = NOW() WHERE id = %s",
-            (int(audio_duration), session_id),
+            (int(skip_duration), session_id),
         )
         return {"statusCode": 200, "body": json.dumps({"status": "SKIPPED", "session_id": session_id})}
 
-    if audio_duration > 0 and audio_duration < MIN_DURATION_SECS:
-        logger.info(
-            "Session %s is %.1fs — below %ds minimum, marking SKIPPED",
-            session_id, audio_duration, MIN_DURATION_SECS,
-        )
-        execute(
-            "UPDATE sessions SET status = 'SKIPPED', duration_secs = %s, updated_at = NOW() WHERE id = %s",
-            (int(audio_duration), session_id),
-        )
-        return {"statusCode": 200, "body": json.dumps({"status": "SKIPPED", "session_id": session_id})}
+    audio_duration = file_duration if file_duration > 0 else speech_duration
 
     # ------------------------------------------------------------------
     # 4. Store segments in DB (delete any existing from a previous attempt)

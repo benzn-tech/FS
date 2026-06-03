@@ -86,10 +86,11 @@ ${transcriptText}`
 
     if (tasks.length === 0) return NextResponse.json({ tasks: [], date })
 
-    const placeholders = tasks.map((_, i) => `($1, $2::date, $${3 + i * 3}, $${4 + i * 3}, $${5 + i * 3}, $6)`).join(', ')
+    const createdByIdx = 3 + tasks.length * 3
+    const placeholders = tasks.map((_, i) => `($1, $2::date, $${3 + i * 3}, $${4 + i * 3}, $${5 + i * 3}, $${createdByIdx})`).join(', ')
     const values: unknown[] = [projectId, date]
     for (const t of tasks) { values.push(t.text, t.priority, t.tag ?? null) }
-    values.push(userId) // created_by
+    values.push(userId) // created_by — always last param at $createdByIdx
 
     const saved = await query<{
       id: string; text: string; priority: string; done: boolean; tag: string | null; created_by: string | null
@@ -105,8 +106,9 @@ ${transcriptText}`
       date,
     })
   } catch (err) {
-    console.error('Bedrock task extraction failed:', err)
-    return NextResponse.json({ tasks: [], date })
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('Bedrock task extraction failed:', msg)
+    return NextResponse.json({ tasks: [], date, _error: msg })
   }
 }
 

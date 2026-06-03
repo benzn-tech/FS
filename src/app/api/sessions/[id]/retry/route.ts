@@ -28,9 +28,7 @@ export const POST = withAuth(
     )
 
     await publishEvent('retry-requested', {
-      sessionId: id,
-      realpttId: row.realptt_id,
-      orgId: session.user.orgId,
+      realptt_id: row.realptt_id,
     })
 
     return NextResponse.json({ ok: true, message: 'Pipeline re-triggered' })

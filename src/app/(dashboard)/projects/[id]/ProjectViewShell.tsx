@@ -5,6 +5,7 @@ import { ProjectDayView, type DayTab, type DaySession } from './ProjectDayView'
 import { ProjectSidePanel } from './ProjectSidePanel'
 import { TranscriptSearchButton } from './TranscriptSearch'
 import { ReportButton } from './ReportButton'
+import { HiddenRecordingsPanel } from './HiddenRecordingsPanel'
 
 interface ProjectViewShellProps {
   projectId: string
@@ -16,6 +17,7 @@ interface ProjectViewShellProps {
   latitude?: number | null
   longitude?: number | null
   canEdit?: boolean
+  isSuperAdmin?: boolean
 }
 
 export function ProjectViewShell({
@@ -28,6 +30,7 @@ export function ProjectViewShell({
   latitude,
   longitude,
   canEdit = false,
+  isSuperAdmin = false,
 }: ProjectViewShellProps) {
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [sessions, setSessions] = useState<DaySession[]>(initialSessions)
@@ -84,6 +87,11 @@ export function ProjectViewShell({
           searchNav={searchNav}
           externalDate={selectedDate}
         />
+
+        {/* Hidden recordings — super_admin diagnostic view */}
+        {isSuperAdmin && (
+          <HiddenRecordingsPanel projectId={projectId} date={selectedDate} />
+        )}
       </div>
 
       {/* Side panel: calendar + map + tasks */}

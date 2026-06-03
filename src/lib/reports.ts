@@ -60,7 +60,7 @@ export async function fetchDayTranscript(
        FROM sessions s
        JOIN transcript_segments ts ON ts.session_id = s.id
       WHERE s.project_id = $1
-        AND DATE(s.recorded_at AT TIME ZONE 'UTC') = $2::date
+        AND DATE(s.recorded_at + interval '10 hours') = $2::date
       ORDER BY s.recorded_at ASC, ts.segment_index ASC`,
     [projectId, date],
   )
@@ -72,7 +72,7 @@ export async function fetchDayTranscript(
   for (const row of rows) {
     const sessionLabel =
       row.session_title ??
-      `Recording at ${new Date(row.recorded_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}`
+      `Recording at ${new Date(row.recorded_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', timeZone: 'Australia/Brisbane' })}`
     if (sessionLabel !== currentSession) {
       currentSession = sessionLabel
       transcriptText += `\n\n=== ${sessionLabel} ===\n`

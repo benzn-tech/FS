@@ -1,0 +1,43 @@
+name: Deploy Lambdas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lambda/**'
+      - '.github/workflows/deploy-lambdas.yml'
+
+jobs:
+  deploy:
+    name: SAM build & deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write   # required for OIDC auth to AWS
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-southeast-2
+
+      - uses: aws-actions/setup-sam@v2
+
+      - name: SAM build
+        working-directory: lambda
+        run: sam build
+
+      - name: SAM deploy
+        working-directory: lambda
+        run: |
+          sam deploy \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --config-file samconfig.toml

@@ -67,7 +67,7 @@ export async function GET(
     date: string
     text: string
   }>(
-    `SELECT DATE(s.recorded_at AT TIME ZONE 'UTC')::text AS date,
+    `SELECT DATE(s.recorded_at + interval '10 hours')::text AS date,
             ts.original_text AS text
        FROM transcript_segments ts
        JOIN sessions s ON s.id = ts.session_id

@@ -64,7 +64,7 @@ Resources:
       CodeUri: .
       Handler: ingest_video.handler
       Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/fieldsightai-ingest-video-role'
-      Timeout: 600           # 10 min — video streaming can be slow
+      Timeout: 900           # 15 min (AWS max) — 1-hour audio files can be large
       MemorySize: 1024       # larger for multipart buffer
       DeadLetterQueue:
         Type: SQS
@@ -124,6 +124,9 @@ Resources:
                 object:
                   key:
                     - suffix: raw.mp4
+                    - suffix: raw.wav
+                    - suffix: raw.mp3
+                    - suffix: raw.aac
 
   # ---------------------------------------------------------------------------
   # process_transcript — EventBridge trigger (AWS Transcribe state change)

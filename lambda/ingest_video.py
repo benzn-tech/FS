@@ -103,7 +103,7 @@ def _stream_to_s3(client: RealPTTClient, down_path: str, bucket: str, key: str) 
     logger.info("Streaming %s → s3://%s/%s", down_path[:80], bucket, key)
     chunk_size = 10 * 1024 * 1024  # 10 MB
 
-    with requests.get(url, stream=True, timeout=120) as resp:
+    with requests.get(url, stream=True, timeout=(30, 600)) as resp:
         resp.raise_for_status()
 
         mpu       = s3.create_multipart_upload(Bucket=bucket, Key=key)
@@ -185,7 +185,10 @@ def _ingest_file(upload_file: dict, org_id: str, client: RealPTTClient) -> str:
     else:
         logger.warning("Device '%s' has no project mapping — will be unassigned", sender_account)
 
-    session_id = str(uuid.uuid4())
+    # Reuse existing session ID if this realptt_id was previously ingested,
+    # so the S3 key path always matches the session's DB id.
+    existing = execute_one("SELECT id FROM sessions WHERE realptt_id = %s", (file_name,))
+    session_id = str(existing["id"]) if existing else str(uuid.uuid4())
     ext        = _TYPE_EXT.get(media_type, ".mp4")
     s3_key     = f"{org_id}/{session_id}/raw{ext}"
 
@@ -258,9 +261,11 @@ def handler(event: dict, context) -> dict:
             logger.info("Retry requested for realptt_id=%s", realptt_id)
 
             # Search recent week across all user accounts to find the file
-            since_str = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+            now_utc   = datetime.now(timezone.utc)
+            since_str = (now_utc - timedelta(days=7) + timedelta(hours=12)).strftime("%Y-%m-%d")
+            until_str = (now_utc + timedelta(hours=13)).strftime("%Y-%m-%d")  # tomorrow NZ
             for user_account in USER_ACCOUNTS:
-                files = client.get_all_upload_files_since(user_account, since_str)
+                files = client.get_all_upload_files_since(user_account, since_str, until_str)
                 target = next((f for f in files if f["file_name"] == realptt_id), None)
                 if target:
                     session_id = _ingest_file(target, org_id, client)

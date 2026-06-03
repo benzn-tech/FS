@@ -47,8 +47,8 @@ export async function GET(
     `SELECT id, title, recorded_at, duration_secs, video_s3_key, status, media_type, speaker_names, ai_tags
        FROM sessions
       WHERE project_id = $1
-        AND DATE(recorded_at AT TIME ZONE 'UTC') = $2::date
-        AND status != 'SKIPPED'
+        AND DATE(recorded_at + interval '10 hours') = $2::date
+        AND status = 'READY'
       ORDER BY recorded_at ASC`,
     [projectId, date],
   )

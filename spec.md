@@ -18,6 +18,29 @@
 
 ---
 
+## ⚠️ Branch Strategy — READ BEFORE PUSHING
+
+> **NEVER push directly to `main`.** There is no GitHub branch protection (free plan) — the rule is enforced by discipline only.
+
+| Branch | Deploys to | URL | Purpose |
+|---|---|---|---|
+| `dev` | Amplify staging | `https://dev.d19u3207g5s0sc.amplifyapp.com` | All active development and testing |
+| `main` | Amplify production | `https://fieldsightai.com` | Stable, customer-facing only |
+
+**Workflow:**
+1. All work happens on `dev` (or a feature branch merged into `dev`)
+2. Test at the staging URL
+3. Only merge `dev` → `main` (via PR) when the change is confirmed working
+4. **Lambda deploys** (`sam deploy`) are shared infrastructure — only deploy from `main`-confirmed changes
+
+**Resetting dev** (discard all dev-only changes, start fresh from main):
+```powershell
+git reset --hard origin/main
+git push origin dev --force
+```
+
+---
+
 ## 2. Tech Stack
 
 | Layer | Technology |
@@ -32,7 +55,7 @@
 | Database | Amazon RDS PostgreSQL 16.6 (`fieldsightai` db) — `ap-southeast-2` |
 | Auth | Custom JWT (`jose` HS256, httpOnly cookie `fsai_session`, 7-day expiry) |
 | Email | AWS SES — `noreply@fieldsightai.com`, `fieldsightai.com` domain verified |
-| CI/CD | GitHub → Amplify auto-deploy on push to `main`; Lambdas via SAM CLI |
+| CI/CD | GitHub (`FieldSightAI/fieldsightai`) → Amplify auto-deploy; `main` → prod, `dev` → staging; Lambdas via SAM CLI |
 | Secrets | AWS SSM Parameter Store (Lambda); env vars (Next.js) |
 
 ---
@@ -53,10 +76,13 @@ Lambda: trigger_transcription.py
   - Status → TRANSCRIBING
        ↓ (EventBridge: Transcribe Job State Change)
 Lambda: process_transcript.py
-  - Checks duration — recordings < 30s marked SKIPPED (accidental activations), hidden from UI
-  - Parses transcript JSON → stores segments in DB, writes duration_secs
+  - Checks actual file duration (from Transcribe `audio_durations` metadata) — recordings < 30s marked SKIPPED (accidental activations), hidden from UI
+  - SKIPPED is based on actual file duration only, never on transcript/speech duration — a 2-min recording with 20s of speech is READY, not SKIPPED
+  - Parses transcript JSON → stores segments in DB, writes duration_secs (actual file duration, not speech duration)
   - Status → READY / FAILED / SKIPPED
 ```
+
+Super_admin **Hidden Recordings panel** (project day view) shows non-READY sessions for a date: SKIPPED (accidental presses), FAILED (pipeline error), INGESTED/TRANSCRIBING (stuck). Actions: Retry (FAILED), Transcribe (INGESTED), Re-ingest form (missing from DB entirely).
 
 ### 3.2 S3 Buckets
 
@@ -73,7 +99,7 @@ Bucket names use `fsai-*` — `fieldsightai-*` names were already taken. Videos/
 | Function | Trigger | Responsibilities |
 |---|---|---|
 | `ingest_video.py` | EventBridge schedule + `retry-requested` event | RealPTT poll → S3 upload → session upsert |
-| `trigger_transcription.py` | S3 PUT (`.mp4` / `.wav`) | Start Transcribe job, status → TRANSCRIBING |
+| `trigger_transcription.py` | S3 PUT (`.mp4` / `.wav` / `.mp3` / `.aac`) | Start Transcribe job, status → TRANSCRIBING |
 | `process_transcript.py` | EventBridge (Transcribe complete) | Parse JSON → segments → READY/FAILED/SKIPPED |
 | `export_to_aconex.py` | Synchronous Lambda invoke | Format transcript → POST to Aconex → `export_log` |
 | `export_to_safebase.py` | Synchronous Lambda invoke | Format transcript → POST to Safebase → `export_log` |
@@ -177,7 +203,10 @@ Two-level hierarchy:
 | POST | `/api/projects/[id]/members/invite` | super_admin | Create user + add to project + send invite |
 | GET/POST | `/api/projects/[id]/devices` | org_admin+ | Lowered from super_admin |
 | DELETE | `/api/projects/[id]/devices/[deviceId]` | org_admin+ | Lowered from super_admin |
-| GET | `/api/projects/[id]/day-sessions` | viewer+ | Sessions + segments + signed URLs for `?date=YYYY-MM-DD`; excludes SKIPPED |
+| GET | `/api/projects/[id]/day-sessions` | viewer+ | Sessions + segments + signed URLs for `?date=YYYY-MM-DD`; only READY sessions |
+| GET | `/api/projects/[id]/hidden-sessions` | super_admin | SKIPPED/FAILED/INGESTED/TRANSCRIBING sessions for a date; powers Hidden Recordings panel |
+| POST | `/api/projects/[id]/reingest` | super_admin | Publish `retry-requested` EventBridge event for a `realpttId` not in DB |
+| POST | `/api/sessions/[id]/trigger-transcription` | super_admin | Directly invoke `trigger-transcription` Lambda for sessions stuck at INGESTED |
 | GET | `/api/projects/[id]/search` | viewer+ | ILIKE across transcript segments; `?q=`; max 50 results |
 | GET/POST/PATCH/DELETE | `/api/projects/[id]/tasks` | viewer+ | **Project-shared** task list; GET auto-seeds via Bedrock (once per project+date), `?assignee=me` filter; POST accepts `tag`, `priority`, `assigneeId` upfront; PATCH any member; DELETE creator or site_admin+ |
 | POST | `/api/projects/[id]/tasks/email` | viewer+ | Email today's action items to self |
@@ -327,9 +356,15 @@ In-memory sliding-window limiter (`src/lib/rate-limit.ts`). Resets on cold start
 |---|---|
 | Amplify blocks `AWS_*` env vars at SSR runtime | All AWS SDK clients (S3, Bedrock, SES, EventBridge, Lambda) must use `APP_AWS_ACCESS_KEY_ID` / `APP_AWS_SECRET_ACCESS_KEY` explicitly. IAM user: `fieldsightai-app`, policy: `fieldsightai-app-policy`. |
 | AWS SDK module-level init | Never instantiate SDK clients at module level — always inside the handler/function. Amplify injects env vars at request time, not module load time. |
-| RDS timezone | Use `AT TIME ZONE 'UTC'` — camera timestamps are stored as-is (NZ local time), no offset needed. `'Australia/Sydney'` not available on RDS. |
+| Timestamps & timezones | Camera timestamps are in AEST (UTC+10). `ingest_video.py` subtracts 10h before storing, so `recorded_at` in DB is UTC. All date-grouping queries use `DATE(recorded_at + interval '10 hours')` to get the correct AEST date. All time display uses `timeZone: 'Australia/Brisbane'`. `'Australia/Sydney'` is not available on RDS. |
 | Transcribe job name on retry | Use `{session_id}-r{retry_count}` to avoid job name conflicts |
 | Silent audio / no speaker labels | `speaker_labels` can be `null` — handle explicitly in `process_transcript.py` |
+| Recording duration vs speech duration | `duration_secs` stores actual file duration from Transcribe's `audio_durations` metadata. SKIPPED check uses `file_duration` if available, falls back to `speech_duration` (last segment end time) if `audio_durations` is absent (common for very short files). Never skip based on speech duration alone when file duration is known. |
+| Sessions stuck at INGESTED | The S3 PUT EventBridge rule only fires for `.mp4/.wav/.mp3/.aac` suffixes — photos and unknown types never trigger transcription. For stuck sessions: super_admin Hidden Recordings panel → Transcribe button invokes `fieldsightai-trigger-transcription` directly. S3 key format is `{org_id}/{session_id}/raw.{ext}` — `session_id` in the path must match the DB row `id` exactly or `process_transcript` will fail with "No session found". |
+| Re-ingest session ID | `_ingest_file` in `ingest_video.py` looks up any existing session by `realptt_id` first and reuses its `id` for the S3 key. This keeps `video_s3_key` and `sessions.id` consistent. Without this, `ON CONFLICT DO UPDATE` changes `video_s3_key` to a new UUID path while the DB row keeps the old UUID. |
+| Playlist shows READY only | Day view queries filter `status = 'READY'`. INGESTED/TRANSCRIBING/FAILED/SKIPPED sessions are hidden from the main playlist. Super_admin Hidden Recordings panel shows non-READY sessions for a given date. |
+| `fieldsightai-app` IAM permissions | Needs `lambda:InvokeFunction` on `fieldsightai-trigger-transcription` and `bedrock:InvokeModel` on `amazon.nova-pro-v1:0`. Add as inline policies in IAM → Users → `fieldsightai-app`. |
+| Bulk task INSERT | `created_by` param index is dynamic: `$${3 + tasks.length * 3}`. Hardcoding as `$6` breaks when Bedrock returns > 1 task. |
 | Bedrock JSON response | Strip ` ```json ``` ` fences before parsing — use `parseBedrockJson()` in `src/lib/reports.ts` |
 | RealPTT session token | Inject `;jsessionid=XXX` before `?` in URL — not as a query param |
 | RealPTT HMAC-SHA1 | `key=SHA1(password)`, `message=random` |

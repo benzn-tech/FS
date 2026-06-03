@@ -29,7 +29,7 @@ function formatRecordedDate(iso: string) {
 }
 
 function formatRecordedTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return new Date(iso).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Australia/Brisbane' })
 }
 
 function highlightMatch(text: string, query: string) {

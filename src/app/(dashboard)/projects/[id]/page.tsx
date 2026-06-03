@@ -57,10 +57,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   // Fetch distinct recording days for this project (for date tabs)
   const dayRows = await query<{ date: string; count: string }>(
-    `SELECT DATE(recorded_at AT TIME ZONE 'UTC')::text AS date,
+    `SELECT DATE(recorded_at + interval '10 hours')::text AS date,
             COUNT(*)::text AS count
        FROM sessions
       WHERE project_id = $1
+        AND status = 'READY'
       GROUP BY 1
       ORDER BY 1 DESC
       LIMIT 30`,
@@ -88,7 +89,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       `SELECT id, title, recorded_at, duration_secs, video_s3_key, status, media_type, speaker_names, ai_tags
          FROM sessions
         WHERE project_id = $1
-          AND DATE(recorded_at AT TIME ZONE 'UTC') = $2::date
+          AND DATE(recorded_at + interval '10 hours') = $2::date
+          AND status = 'READY'
         ORDER BY recorded_at ASC`,
       [projectId, initialDate],
     )
@@ -235,6 +237,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               latitude={project.latitude != null ? parseFloat(project.latitude) : null}
               longitude={project.longitude != null ? parseFloat(project.longitude) : null}
               canEdit={hasMinRole(role, 'editor')}
+              isSuperAdmin={isSuperAdmin}
             />
           )}
         </div>
